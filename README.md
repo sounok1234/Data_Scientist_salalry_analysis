@@ -1,1 +1,1 @@
-# Data_Scientist_salalry_analysis
+# Data_Scientist_salary_analysis
