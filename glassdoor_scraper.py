@@ -1,10 +1,10 @@
-
 from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException
 from selenium import webdriver
 import time
 import pandas as pd
 
-def get_jobs(keyword, num_jobs, verbose, path, sleep_time):
+
+def get_jobs(keyword, num_jobs, verbose, path, slp_time):
     
     '''Gathers jobs as a dataframe, scraped from Glassdoor'''
     
@@ -17,9 +17,8 @@ def get_jobs(keyword, num_jobs, verbose, path, sleep_time):
     #Change the path to where chromedriver is in your home folder.
     driver = webdriver.Chrome(executable_path=path, options=options)
     driver.set_window_size(1120, 1000)
-
+    
     url = "https://www.glassdoor.com/Job/jobs.htm?suggestCount=0&suggestChosen=false&clickSource=searchBtn&typedKeyword="+keyword+"&sc.keyword="+keyword+"&locT=&locId=&jobType="
-    #url = "https://www.glassdoor.com/Job/jobs.htm?suggestCount=0&suggestChosen=false&clickSource=searchBtn&typedKeyword=&locT=&locId=0&jobType=&context=Jobs&sc.keyword=data+scientist&dropdown=0
     #url = 'https://www.glassdoor.com/Job/jobs.htm?sc.keyword="' + keyword + '"&locT=C&locId=1147401&locKeyword=San%20Francisco,%20CA&jobType=all&fromAge=-1&minSalary=0&includeNoSalaryJobs=true&radius=100&cityId=-1&minRating=0.0&industryId=-1&sgocId=-1&seniorityType=all&companyId=-1&employerSizes=0&applicationType=0&remoteWorkType=0'
     driver.get(url)
     jobs = []
@@ -28,7 +27,7 @@ def get_jobs(keyword, num_jobs, verbose, path, sleep_time):
 
         #Let the page load. Change this number based on your internet speed.
         #Or, wait until the webpage is loaded, instead of hardcoding it.
-        time.sleep(sleep_time)
+        time.sleep(slp_time)
 
         #Test for the "Sign Up" prompt and get rid of it.
         try:
@@ -39,10 +38,10 @@ def get_jobs(keyword, num_jobs, verbose, path, sleep_time):
         time.sleep(.1)
 
         try:
-            driver.find_element_by_css_selector('[alt="Close"]').click()  #clicking to the X.
-            print('x worked')
+            driver.find_element_by_css_selector('[alt="Close"]').click() #clicking to the X.
+            print(' x out worked')
         except NoSuchElementException:
-            print('x failed')
+            print(' x out failed')
             pass
 
         
@@ -53,14 +52,16 @@ def get_jobs(keyword, num_jobs, verbose, path, sleep_time):
             print("Progress: {}".format("" + str(len(jobs)) + "/" + str(num_jobs)))
             if len(jobs) >= num_jobs:
                 break
-            job_button.click()  #You might 
+            
+            #job_button.click()  #You might 
+            driver.execute_script("arguments[0].click();", job_button)
             time.sleep(1)
             collected_successfully = False
             
             while not collected_successfully:
                 try:
                     company_name = driver.find_element_by_xpath('.//div[@class="employerName"]').text
-                    location = driver.find_element_by_xpath('.//div[@class="location"]').text
+                    location = driver.find_element_by_xpath('.//div[@class="location"]').text           
                     job_title = driver.find_element_by_xpath('.//div[contains(@class, "title")]').text
                     job_description = driver.find_element_by_xpath('.//div[@class="jobDescriptionContent desc"]').text
                     collected_successfully = True
@@ -68,10 +69,13 @@ def get_jobs(keyword, num_jobs, verbose, path, sleep_time):
                     time.sleep(5)
 
             try:
-                salary_estimate = driver.find_element_by_xpath('.//span[@class="gray salary"]').text
+                salary_estimate = driver.find_element_by_xpath('//*[@id="HeroHeaderModule"]/div[3]/div[1]/div[4]/span').text 
+                #salary_estimate = driver.find_element_by_xpath('.//span[@class="gray salary"]').text 
+                
+                print(salary_estimate)
             except NoSuchElementException:
                 salary_estimate = -1 #You need to set a "not found value. It's important."
-            
+            #driver.refresh()
             try:
                 rating = driver.find_element_by_xpath('.//span[@class="rating"]').text
             except NoSuchElementException:
@@ -173,7 +177,8 @@ def get_jobs(keyword, num_jobs, verbose, path, sleep_time):
             "Revenue" : revenue,
             "Competitors" : competitors})
             #add job to jobs
-
+            
+            
         #Clicking on the "next page" button
         try:
             driver.find_element_by_xpath('.//li[@class="next"]//a').click()
